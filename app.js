@@ -1,24 +1,34 @@
+import express from 'express';
+import mongoose from 'mongoose';
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
+import Promise from 'bluebird';
 
-const express = require('express');
-const mongoose = require('mongoose');
-
-const port = 8081;
+import appRoutes from './routes/app'
+import user from './routes/user';
+import auth from './routes/auth';
 
 const app = express();
-// const router = express.Router();
+
+dotenv.config();
+
+// Body Parser
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 
 // Conexión
-mongoose.connection.openUri('mongodb://localhost:27017/hospitalDB', (err, res) => {
+mongoose.Promise = Promise;
+mongoose.connection.openUri(process.env.MONGODB_URL, (err, res) => {
     if (err) throw err;
 
     console.log(`Base de datos \x1b[32m%s\x1b[0m`, 'online');
 })
 
 // Rutas
-app.get('/', (req, res) => {
-    res.status(200).json({ message: 'OK' });
-});
+app.use('/api', appRoutes);
+app.use('/api/login', auth)
+app.use('/api/users', user)
 
-app.listen(port, () => {
-    console.log(`Servidor express corriendo en el puerto ${port}: \x1b[32m%s\x1b[0m`, 'online');
+app.listen(process.env.BACKEND_PORT, () => {
+    console.log(`Servidor express corriendo en el puerto ${process.env.BACKEND_PORT}: \x1b[32m%s\x1b[0m`, 'online');
 });
