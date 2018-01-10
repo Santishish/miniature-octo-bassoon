@@ -1,5 +1,7 @@
 import express from 'express';
 import bcrypt from 'bcryptjs';
+import pagination from 'mongoose-pagination';
+
 import { verifyToken } from '../middlewares/auth';
 
 import User from '../models/user';
@@ -8,15 +10,17 @@ const user = express();
 
 // Obtener todos los usuarios
 
-user.get('/', (req, res) => {
-    User.find({}, (err, users) => {
-        if (err) return res.status(500).json({ message: 'Error cargando usuarios', errors: err });
-        if (!users) {
-            res.status(404).json({ message: 'No se encontraron usuarios' });
-        } else {
+user.get('/:page?', (req, res) => {
+    let page;
+    req.params.page ? page = req.params.page : page = 1;
+
+    User.find({}, 'name email img role')
+        .paginate(page, 5)
+        .then(users => {
+            if (users.length === 0) return res.status(404).json({ message: 'No se encontraron usuarios' });
             res.status(200).json({ users });
-        }
-    });    
+        })
+        .catch(err => res.status(500).json({ message: 'Error cargando usuarios', errors: err }));   
 });
 
 // Crear usuario
