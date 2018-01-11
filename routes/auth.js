@@ -3,9 +3,13 @@ import bcrypt from 'bcryptjs';
 import User from '../models/user';
 import jwt from 'jsonwebtoken';
 
-const auth = express();
+import GoogleAuth from 'google-auth-library';
 
-auth.post('/', (req, res) => {
+const app = express();
+const auth = new GoogleAuth;
+
+// Autenticación normal
+app.post('/', (req, res) => {
     const body = req.body;
 
     if (body.password) {
@@ -16,11 +20,57 @@ auth.post('/', (req, res) => {
             // Crear token
             user.password = ':)';
             const token = jwt.sign({ user }, process.env.APP_SECRET, { expiresIn: 14400 }); // 4 horas
-            res.status(200).json({ user, token });
+            res.status(200).json({ user, token, id: user._id });
         });
     } else {
         return res.status(400).json({ message: 'Ingrese la contraseña' });
     }
 });
 
-export default auth;
+// Autenticación con Google
+app.post('/google', (req, res) => {
+    let token = req.body.token || 'Yolo';
+    
+    const client = new auth.OAuth2(process.env.GOOGLE_CLIENT_ID, process.env.GOOGLE_SECRET, '');
+
+    client.verifyIdToken(
+        token,
+        process.env.GOOGLE_CLIENT_ID,
+        (e, login) => {
+            if (e) return res.status(400).json({ message: 'Token no válido', errors: e });
+
+            const payload = login.getPayload();
+            const userId = payload['sub'];
+
+            User.findOne({ email: payload.email })
+                .then(user => {
+                    // Si el usuario existe por correo
+                    if (user) {
+                        if (!user.google) return res.status(400).json({ message: 'Debe de usar su autenticación normal' });
+                        user.password = ':)';
+                        const token = jwt.sign({ user }, process.env.APP_SECRET, { expiresIn: 14400 }); // 4 horas
+                        res.status(200).json({ user, token, id: user._id });
+                    } else {
+                        // Si el usuario no existe por correo
+                        const user = new User();
+
+                        user.name = payload.name;
+                        user.email = payload.email;
+                        user.password = ':)';
+                        user.img = payload.picture;
+                        user.google = true;
+
+                        User.create(user)
+                            .then(userCreated => {
+                                const token = jwt.sign({ userCreated }, process.env.APP_SECRET, { expiresIn: 14400 }); // 4 horas
+                                res.status(200).json({ userCreated, token });
+                            })
+                            .catch(err => res.status(500).json({ message: 'Error al crear usuario', errors: err }));
+                    }
+                })
+                .catch(err => res.status(500).json({ message: 'Error al buscar usuario', errors: err }))
+        }
+    )
+});
+
+export default app;

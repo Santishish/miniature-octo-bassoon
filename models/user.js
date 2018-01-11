@@ -12,7 +12,7 @@ const userSchema = mongoose.Schema({
     password: { type: String, required: [true, 'La contraseña es requerida'] },
     img: { type: String, required: false, default: '' },
     role: { type: String, required: true, default: 'USER_ROLE', enum: validRoles },
-    
+    google: { type: Boolean, required: true, default: false }
 });
 
 userSchema.plugin(uniqueValidator, { message: '{PATH} ya existe' });
