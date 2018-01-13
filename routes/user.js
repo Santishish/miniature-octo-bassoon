@@ -14,13 +14,16 @@ user.get('/:page?', (req, res) => {
     let page;
     req.params.page ? page = req.params.page : page = 1;
 
-    User.find({}, 'name email img role')
+    User.find({}, 'name email img role google')
         .paginate(page, 5)
         .then(users => {
             if (users.length === 0) return res.status(404).json({ message: 'No se encontraron usuarios' });
-            res.status(200).json({ users });
+            User.count({})
+                .then(total => {
+                    res.status(200).json({ total, users });
+                })
         })
-        .catch(err => res.status(500).json({ message: 'Error cargando usuarios', errors: err }));   
+        .catch(err => res.status(500).json({ message: 'Error cargando usuarios', errors: err }));
 });
 
 // Crear usuario

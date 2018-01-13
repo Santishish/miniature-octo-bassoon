@@ -14,6 +14,14 @@ import upload from './routes/upload';
 import imgRoutes from './routes/images';
 const app = express();
 
+// CORS Settings
+app.use((req, res, next) => {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  res.header("Access-Control-Allow-Methods", "POST, GET, PUT, DELETE, OPTIONS");
+  next();
+});
+
 dotenv.config();
 
 // Body Parser
@@ -24,7 +32,7 @@ app.use(bodyParser.json());
 mongoose.Promise = Promise;
 mongoose.connection.openUri(process.env.MONGODB_URL, (err, res) => {
     if (err) throw err;
-    
+
     console.log(`Base de datos \x1b[32m%s\x1b[0m`, 'online');
 });
 

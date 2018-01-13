@@ -47,7 +47,7 @@ upload.put('/:type/:id', (req, res) => {
         }
 
         uploadByType(type, id, customName, res);
-        // 
+        //
     });
 
 });
@@ -57,48 +57,56 @@ const uploadByType = (type, id, fileName, res) => {
         case 'users':
             User.findById(id)
                 .then(user => {
-                    const oldPath = `./uploads/users/${user.img}`;
+                    if (!user) return res.status(404).json({ message: 'El usuario no existe' });
+                    if (user.img) {
+                        const oldPath = `./uploads/users/${user.img}`;
+                        // Si existe, elimina la imagen anterior
+                        if (fs.existsSync(oldPath)) {
+                            fs.unlink(oldPath, (err) =>{
+                                if (err) return res.status(400).json({ message: 'Que está pasandooooo', err });
+                            });
+                        }
+                    }
+                    user.img = fileName;
+                    user.save((err, userUpdated) => {
+                        return res.status(200).json({ message: 'Imagen de usuario actualizada', user: userUpdated });
+                    });
+                    });
+        break;
+        case 'doctors':
+            Doctor.findById(id)
+            .then(doctor => {
+
+                if (doctor.img) {
+                    const oldPath = `./uploads/doctors/${doctor.img}`;
                     // Si existe, elimina la imagen anterior
                     if (fs.existsSync(oldPath)) {
                         fs.unlink(oldPath, (err) =>{
                             if (err) return res.status(400).json({ message: 'Que está pasandooooo' });
                         });
                     }
-                    user.img = fileName;
-                    user.save((err, userUpdated) => {
-                        return res.status(200).json({ message: 'Imagen de usuario actualizada', userUpdated });
-                    });
-                });
-        break;
-        case 'doctors':
-            Doctor.findById(id)
-            .then(doctor => {
-                const oldPath = `./uploads/doctors/${doctor.img}`;
-                // Si existe, elimina la imagen anterior
-                if (fs.existsSync(oldPath)) {
-                    fs.unlink(oldPath, (err) =>{
-                        if (err) return res.status(400).json({ message: 'Que está pasandooooo' });
-                    });
                 }
                 doctor.img = fileName;
                 doctor.save((err, doctorUpdated) => {
-                    return res.status(200).json({ message: 'Imagen de médico actualizada', doctorUpdated });
+                    return res.status(200).json({ message: 'Imagen de médico actualizada', doctor: doctorUpdated });
                 });
             });
         break;
         case 'hospitals':
             Hospital.findById(id)
             .then(hospital => {
-                const oldPath = `./uploads/hospitals/${hospital.img}`;
-                // Si existe, elimina la imagen anterior
-                if (fs.existsSync(oldPath)) {
-                    fs.unlink(oldPath, (err) =>{
-                        if (err) return res.status(400).json({ message: 'Que está pasandooooo' });
-                    });
+                if (hospital.img) {
+                    const oldPath = `./uploads/hospitals/${hospital.img}`;
+                    // Si existe, elimina la imagen anterior
+                    if (fs.existsSync(oldPath)) {
+                        fs.unlink(oldPath, (err) =>{
+                            if (err) return res.status(400).json({ message: 'Que está pasandooooo' });
+                        });
+                    }
                 }
                 hospital.img = fileName;
                 hospital.save((err, hospitalUpdated) => {
-                    return res.status(200).json({ message: 'Imagen de médico actualizada', hospitalUpdated });
+                    return res.status(200).json({ message: 'Imagen de médico actualizada', hospital: hospitalUpdated });
                 });
             });
 
