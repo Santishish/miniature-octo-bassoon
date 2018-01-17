@@ -7,7 +7,7 @@ import Hospital from '../models/hospital';
 const hospital = express.Router();
 
 // Obtener todos los hospitales
-hospital.get('/:page?', (req, res) => {
+hospital.get('/paginated/:page?', (req, res) => {
     let page;
     req.params.page ? page = req.params.page : page = 1;
 
@@ -16,10 +16,31 @@ hospital.get('/:page?', (req, res) => {
         .paginate(page, 5)
         .populate('user', 'name email user')
         .then(hospitals => {
-            if (hospitals.length === 0) return res.status(404).json({ message: 'No hay hospitales registrados' });
-            res.status(200).json({ hospitals });
+            Hospital.count({})
+                .then(total => res.status(200).json({ total, hospitals }));
         })
         .catch(err => res.status(400).json({ message: 'Ocurrió un error al buscar hospitales', errors: err }))
+});
+
+// Obtener todos los hospitales sin paginación
+hospital.get('/all', (req, res) => {
+    Hospital.find({})
+        .populate('user', 'name email user')
+        .then(hospitals => res.status(200).json({ hospitals }))
+        .catch(err => res.status(500).json({ message: 'Error al realizar la búsqueda', errors: err }));
+});
+
+// Obtener un hospital por su ID
+hospital.get('/:id', (req, res) => {
+    const { id } = req.params;
+
+    Hospital.findById(id)
+        .populate('usuario', 'name img email')
+        .then(hospital => {
+            if (!hospital) return res.status(404).json({ message: 'No existe un hospital con el ID ingresado' });
+            res.status(200).json({ hospital });
+        })
+        .catch(err => res.status(500).json({ message: 'Error al buscar el hospital', errors: err }));
 });
 
 // Crear un hospital

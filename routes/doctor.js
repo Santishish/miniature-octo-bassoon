@@ -16,10 +16,21 @@ routes.get('/:page?', (req, res) => {
         .populate('user', 'name email')
         .populate('hospital', 'name img')
         .then(doctors => {
-            if (doctors.length === 0) return res.status(404).json({ message: 'No se encuentran doctores registrados' });
-            res.json({ doctors })
+
+            Doctor.count({})
+                .then(total => res.json({ total, doctors }));
         })
         .catch(err => res.status(400).json({ message: 'Error al buscar doctores', errors: err }));
+});
+
+// Obtener un médico
+routes.get('/get/:id', (req, res) => {
+    const { id } = req.params;
+    Doctor.findById(id)
+        .populate('user', 'name email img')
+        .populate('hospital')
+        .then(doctor => res.json({ doctor }))
+        .catch(err => res.status(404).json({ message: 'No existe un médico con el ID proporcionado', errors: err }));
 });
 
 // Crear un doctor

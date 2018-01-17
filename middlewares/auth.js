@@ -10,5 +10,21 @@ export const verifyToken = (req, res, next) => {
     });
 };
 
+export const verifyAdminRole = (req, res, next) => {
+	const user = req.user;
+	if (user.role === 'ADMIN_ROLE') {
+		next();
+	} else {
+		if (err) return res.status(401).json({ message: 'Token incorrecto' });
+	}
+};
 
-
+export const verifyAdminOrSelf = (req, res, next) => {
+	const user = req.user;
+	const {id} = req.params;
+	if (user.role === 'ADMIN_ROLE' || user._id === id) {
+		next();
+	} else {
+		if (err) return res.status(401).json({ message: 'Token incorrecto' });
+	}
+};

@@ -2,7 +2,7 @@ import express from 'express';
 import bcrypt from 'bcryptjs';
 import pagination from 'mongoose-pagination';
 
-import { verifyToken } from '../middlewares/auth';
+import { verifyToken, verifyAdminRole, verifyAdminOrSelf } from '../middlewares/auth';
 
 import User from '../models/user';
 
@@ -46,7 +46,7 @@ user.post('/', (req, res) => {
 });
 
 // Actualizar usuario
-user.put('/:id', verifyToken,(req, res) => {
+user.put('/:id', [verifyToken, verifyAdminOrSelf],(req, res) => {
     const id = req.params.id;
     const body = req.body;
 
@@ -70,7 +70,7 @@ user.put('/:id', verifyToken,(req, res) => {
 });
 
 // Borrar un usuario por id
-user.delete('/:id', verifyToken, (req, res) => {
+user.delete('/:id', [verifyToken, verifyAdminRole], (req, res) => {
     const id = req.params.id;
     User.findByIdAndRemove(id, (err, userDeleted) => {
         if (err) return res.status(500).json({ message: 'Ocurrió un error al eliminar', errors: err });
